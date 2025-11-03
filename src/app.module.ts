@@ -11,18 +11,32 @@ import { Env } from './env.model';
       isGlobal: true, // para que ConfigService esté disponible en todo el proyecto
     }),
     TypeOrmModule.forRootAsync({
-      useFactory: (configService: ConfigService<Env>) => ({
-        type: 'postgres',
-        host: configService.get('POSTGRES_HOST', { infer: true }),
-        port: configService.get('POSTGRES_PORT', { infer: true }),
-        username: configService.get('POSTGRES_USER', { infer: true }),
-        password: configService.get('POSTGRES_PASSWORD', { infer: true }),
-        database: configService.get('POSTGRES_DB', { infer: true }),
-        autoLoadEntities: true,
-        synchronize: true, // solo desarrollo; en producción se recomienda false
-      }),
-      inject: [ConfigService],
-    }),
+  useFactory: (configService: ConfigService<Env>) => {
+    // Usar únicamente variables declaradas en `Env` (POSTGRES_*)
+    const host = configService.get('POSTGRES_HOST');
+    const port = Number(configService.get('POSTGRES_PORT')) || 5432;
+    const username = configService.get('POSTGRES_USER');
+    const password = configService.get('POSTGRES_PASSWORD');
+    const database = configService.get('POSTGRES_DB');
+
+    console.log('TypeORM connecting to', host, port, database);
+
+    return {
+      type: 'postgres',
+      host,
+      port,
+      username,
+      password,
+      database,
+      // Si necesitas SSL (por ejemplo Supabase), agrega una variable en Env
+      // y cámbialo aquí; por ahora dejamos la configuración básica.
+      autoLoadEntities: true,
+      synchronize: true,
+    };
+  },
+  inject: [ConfigService],
+})
+,
     UsersModule,
   ],
 })
